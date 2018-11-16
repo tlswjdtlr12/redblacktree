@@ -1,3 +1,4 @@
+// 2014004739 신정식
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -6,12 +7,9 @@ struct RedBlackNode;
 typedef struct RedBlackNode *Position;
 typedef struct RedBlackNode *RedBlackTree;
 
-RedBlackTree MakeEmpty(RedBlackTree T);
 Position Find(ElementType X, RedBlackTree T);
 RedBlackTree Initialize(void);
 RedBlackTree Insert(ElementType X, RedBlackTree T);
-
-void PrintTree(RedBlackTree T);
 
 typedef enum ColorType {
     Red, Black
@@ -65,21 +63,15 @@ DoPrint(RedBlackTree T) {
 
 /* END */
 
-static RedBlackTree
-MakeEmptyRec(RedBlackTree T) {
-    if (T != NullNode) {
-        MakeEmptyRec(T->Left);
-        MakeEmptyRec(T->Right);
-        free(T);
-    }
-    return NullNode;
-}
-
-RedBlackTree
-MakeEmpty(RedBlackTree T) {
-    T->Right = MakeEmptyRec(T->Right);
-    return T;
-}
+//static RedBlackTree
+//MakeEmptyRec(RedBlackTree T) {
+//    if (T != NullNode) {
+//        MakeEmptyRec(T->Left);
+//        MakeEmptyRec(T->Right);
+//        //free(T);
+//    }
+//    return NullNode;
+//}
 
 Position
 Find(ElementType X, RedBlackTree T) {
@@ -202,7 +194,8 @@ main() {
     RedBlackTree T;
 
     T = Initialize();
-    T = MakeEmpty(T);
+//    T = MakeEmpty(T);
+//    T->Right = MakeEmptyRec(T->Right);
 
     //for (i = 0; i < 800; i++, j = (j + 7) % 800)
     //  T = Insert(j, T);
@@ -218,7 +211,6 @@ main() {
     T = Insert(10, T);
 
     printf("Inserts are complete\n");
-
     DoPrint(T->Right); // header skip
     return 0;
 }

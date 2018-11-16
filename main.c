@@ -1,7 +1,7 @@
 // 2014004739 신정식
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
+#include <inttypes.h>
 
 typedef int ElementType;
 struct RedBlackNode;
@@ -198,7 +198,7 @@ main() {
     {
         switch(infi) {
             case 'I':
-                fscanf(open, "%lld%lld", &key, &val);
+                fscanf(open, "%d%d", &key, &val);
                 T = Insert(key, val, T);
 //                if(dupli==1){
 //                    fprintf(close,"Found (%lld,%lld) update v=%lld\n",key,pre_value,val);

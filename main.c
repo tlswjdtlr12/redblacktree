@@ -1,6 +1,7 @@
 // 2014004739 신정식
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 typedef int ElementType;
 struct RedBlackNode;
@@ -8,8 +9,7 @@ typedef struct RedBlackNode *Position;
 typedef struct RedBlackNode *RedBlackTree;
 
 Position Find(ElementType X, RedBlackTree T);
-RedBlackTree Initialize(void);
-RedBlackTree Insert(ElementType X, RedBlackTree T);
+RedBlackTree Insert(ElementType X, ElementType ival, RedBlackTree T);
 
 typedef enum ColorType {
     Red, Black
@@ -17,61 +17,16 @@ typedef enum ColorType {
 
 struct RedBlackNode {
     ElementType Element;
+    ElementType Value;
     RedBlackTree Left;
     RedBlackTree Right;
     ColorType Color;
 };
 
-static Position NullNode = NULL; /* Needs initialization */
-
-/* Initialization procedure */
-RedBlackTree
-Initialize(void) {
-    RedBlackTree T;
-
-    if (NullNode == NULL) {
-        NullNode = malloc(sizeof ( struct RedBlackNode));
-        if (NullNode == NULL)
-            printf("Out of space!!!");
-        NullNode->Left = NullNode->Right = NullNode;
-        NullNode->Color = Black;
-        NullNode->Element = 12345;
-    }
-
-    /* Create the header node */
-    T = malloc(sizeof ( struct RedBlackNode));
-    if (T == NULL)
-        printf("Out of space!!!");
-    //T->Element = -10;
-    T->Left = T->Right = NullNode;
-    T->Color = Black;
-
-    return T;
-}
-
-
-static void
-DoPrint(RedBlackTree T) {
-    if (T != NullNode) {
-        //Output(T->Element);
-        printf("%d ",T->Element);
-        DoPrint(T->Left);
-        DoPrint(T->Right);
-    }
-}
-
+Position NullNode = NULL; /* Needs initialization */
+FILE * close;
 
 /* END */
-
-//static RedBlackTree
-//MakeEmptyRec(RedBlackTree T) {
-//    if (T != NullNode) {
-//        MakeEmptyRec(T->Left);
-//        MakeEmptyRec(T->Right);
-//        //free(T);
-//    }
-//    return NullNode;
-//}
 
 Position
 Find(ElementType X, RedBlackTree T) {
@@ -86,13 +41,21 @@ Find(ElementType X, RedBlackTree T) {
         return T;
 }
 
+void
+PrintTree(RedBlackTree T, FILE * close) {
+    if (T != NullNode) {
+        printf("%lld ",T->Element);
+        PrintTree(T->Left,close);
+        PrintTree(T->Right,close);
+    }
+}
 
 /* This function can be called only if K2 has a left child */
 /* Perform a rotate between a node (K2) and its left child */
 
 /* Update heights, then return new root */
 
-static Position
+Position
 SingleRotateWithLeft(Position K2) {
     Position K1;
 
@@ -108,7 +71,7 @@ SingleRotateWithLeft(Position K2) {
 
 /* Update heights, then return new root */
 
-static Position
+Position
 SingleRotateWithRight(Position K1) {
     Position K2;
 
@@ -124,7 +87,7 @@ SingleRotateWithRight(Position K1) {
 
 /* The child is deduced by examining Item */
 
-static Position
+Position
 Rotate(ElementType Item, Position Parent) {
 
     if (Item < Parent->Element)
@@ -137,28 +100,13 @@ Rotate(ElementType Item, Position Parent) {
                                SingleRotateWithRight(Parent->Right);
 }
 
-static Position X, P, GP, GGP;
-
-static
-void HandleReorient(ElementType Item, RedBlackTree T) {
-    X->Color = Red; /* Do the color flip */
-    X->Left->Color = Black;
-    X->Right->Color = Black;
-
-    if (P->Color == Red) /* Have to rotate */ {
-        GP->Color = Red;
-        if ((Item < GP->Element) != (Item < P->Element))
-            P = Rotate(Item, GP); /* Start double rotate */
-        X = Rotate(Item, GGP);
-        X->Color = Black;
-    }
-    T->Right->Color = Black; /* Make root black */
-}
+Position X, P, GP, GGP;
 
 RedBlackTree
-Insert(ElementType Item, RedBlackTree T) {
+Insert(ElementType Item, ElementType ival, RedBlackTree T) {
     X = P = GP = T;
     NullNode->Element = Item;
+    if(NullNode->Element==NULL){printf("check input\n"); return T;}
     while (X->Element != Item) /* Descend down the tree */ {
         GGP = GP;
         GP = P;
@@ -167,8 +115,22 @@ Insert(ElementType Item, RedBlackTree T) {
             X = X->Left;
         else
             X = X->Right;
-        if (X->Left->Color == Red && X->Right->Color == Red)
-            HandleReorient(Item, T);
+        if (X->Left->Color == Red && X->Right->Color == Red){
+            // HandleReorient(Item, T);
+            X->Color = Red; /* Do the color flip */
+            X->Left->Color = Black;
+            X->Right->Color = Black;
+
+            if (P->Color == Red) /* Have to rotate */ {
+                GP->Color = Red;
+                if ((Item < GP->Element) != (Item < P->Element))
+                    P = Rotate(Item, GP); /* Start double rotate */
+                X = Rotate(Item, GGP);
+                X->Color = Black;
+            }
+            T->Right->Color = Black; /* Make root black */
+        }
+
     }
 
     if (X != NullNode)
@@ -184,7 +146,18 @@ Insert(ElementType Item, RedBlackTree T) {
         P->Left = X;
     else
         P->Right = X;
-    HandleReorient(Item, T); /* Color it red; maybe rotate */
+    X->Color = Red; /* Do the color flip */
+    X->Left->Color = Black;
+    X->Right->Color = Black;
+
+    if (P->Color == Red) /* Have to rotate */ {
+        GP->Color = Red;
+        if ((Item < GP->Element) != (Item < P->Element))
+            P = Rotate(Item, GP); /* Start double rotate */
+        X = Rotate(Item, GGP);
+        X->Color = Black;
+    }
+    T->Right->Color = Black; /* Make root black */
 
     return T;
 }
@@ -193,24 +166,67 @@ Insert(ElementType Item, RedBlackTree T) {
 main() {
     RedBlackTree T;
 
-    T = Initialize();
-//    T = MakeEmpty(T);
-//    T->Right = MakeEmptyRec(T->Right);
+    if (NullNode == NULL) {
+        NullNode = malloc(sizeof ( struct RedBlackNode));
+        if (NullNode == NULL)
+            printf("Out of space!!!");
+        NullNode->Left = NullNode->Right = NullNode;
+        NullNode->Color = Black;
+    }
 
-    //for (i = 0; i < 800; i++, j = (j + 7) % 800)
-    //  T = Insert(j, T);
-    T = Insert(1, T);
-    T = Insert(3, T);
-    T = Insert(2, T);
-    T = Insert(4, T);
-    T = Insert(5, T);
-    T = Insert(7, T);
-    T = Insert(6, T);
-    T = Insert(9, T);
-    T = Insert(8, T);
-    T = Insert(10, T);
+    /* Create the header node */
+    T = malloc(sizeof ( struct RedBlackNode));
+    if (T == NULL)
+        printf("Out of space!!!");
+    //T->Element = -10;
+    T->Left = T->Right = NullNode;
+    T->Color = Black;
+
 
     printf("Inserts are complete\n");
-    DoPrint(T->Right); // header skip
+    //PrintTree(T->Right); // header skip
+
+
+
+    char infi; // insert, find
+    ElementType key,val;
+    FILE *open = fopen("input.txt","r");
+    close = fopen("output.txt","w");
+    if(open==NULL){puts("err : file read"); return 0;}
+
+    while(fscanf(open,"%c",&infi) != EOF)
+    {
+        switch(infi) {
+            case 'I':
+                fscanf(open, "%lld%lld", &key, &val);
+                T = Insert(key, val, T);
+//                if(dupli==1){
+//                    fprintf(close,"Found (%lld,%lld) update v=%lld\n",key,pre_value,val);
+//                    dupli=0;
+//                }
+//                else fprintf(close,"Inserted (%lld,%lld)\n",key,val);
+                break;
+            case 'F':
+                fscanf(open, "%lld", &key);
+//                F = Find(key,T);
+//                if(notfound==1){
+//                    fprintf(close,"Not Found\n");
+//                    notfound=0;
+//                    depth=0;
+//                }
+//                else{
+//                    fprintf(close,"Found (%lld,%lld) on d=%d with h=%d\n",F->Key,F->Value,depth,getHeight(F));
+//                    depth=0;
+//
+//                }
+                break;
+            case 'P':
+                PrintTree(T->Right, close);
+                fprintf(close, "\n");
+            case 'Q':
+                // end of file
+                break;
+        }
+    }
     return 0;
 }

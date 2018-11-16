@@ -2,58 +2,53 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef int ElementType;
+//typedef int int;
 struct RedBlackNode;
 typedef struct RedBlackNode *Position;
-typedef struct RedBlackNode *RedBlackTree;
+typedef struct RedBlackNode *RBTree;
 
-Position Find(ElementType X, RedBlackTree T);
-RedBlackTree Insert(ElementType X, ElementType ival, RedBlackTree T);
+RBTree Find(int X, RBTree T);
+RBTree Insert(int X, int ival, RBTree T);
 
-typedef enum ColorType {
+typedef enum Color {
     Red, Black
-} ColorType;
+} Color;
 
 struct RedBlackNode {
-    ElementType Element;
-    ElementType Value;
-    RedBlackTree Left;
-    RedBlackTree Right;
-    ColorType Color;
+    int Key;
+    int Value;
+    RBTree Left;
+    RBTree Right;
+    Color Color;
 };
 
 Position NullNode = NULL; /* Needs initialization */
 FILE * close;
+int depth, dupli, pre_value, notfound;
 
 /* END */
 
-Position
-Find(ElementType X, RedBlackTree T) {
-    if (T == NullNode)
-        return NullNode;
-    if (X < T->Element)
-        return Find(X, T->Left);
-    else
-    if (X > T->Element)
-        return Find(X, T->Right);
+RBTree Find(int ikey, RBTree T) {
+    if(ikey==NULL){printf("check input\n"); return T;}
+    if (T == NullNode) {
+        notfound = 1;
+        return T;
+    }
+    if (T->Key > ikey) {
+        depth++;
+        return Find(ikey, T->Left);
+    }
+    else if (T->Key < ikey) {
+        depth++;
+        return Find(ikey, T->Right);
+    }
     else
         return T;
 }
 
-static RedBlackTree
-MakeEmptyRec(RedBlackTree T) {
+void PrintTree(RBTree T, FILE * close) {
     if (T != NullNode) {
-        MakeEmptyRec(T->Left);
-        MakeEmptyRec(T->Right);
-        free(T);
-    }
-    return NullNode;
-}
-
-void
-PrintTree(RedBlackTree T, FILE * close) {
-    if (T != NullNode) {
-        fprintf(close,"%d ",T->Element);
+        fprintf(close,"(%d,%d) ",T->Key,T->Value);
         PrintTree(T->Left,close);
         PrintTree(T->Right,close);
     }
@@ -64,8 +59,7 @@ PrintTree(RedBlackTree T, FILE * close) {
 
 /* Update heights, then return new root */
 
-Position
-SingleRotateWithLeft(Position K2) {
+Position SingleRotateWithLeft(Position K2) {
     Position K1;
 
     K1 = K2->Left;
@@ -80,8 +74,7 @@ SingleRotateWithLeft(Position K2) {
 
 /* Update heights, then return new root */
 
-Position
-SingleRotateWithRight(Position K1) {
+Position SingleRotateWithRight(Position K1) {
     Position K2;
 
     K2 = K1->Right;
@@ -94,64 +87,65 @@ SingleRotateWithRight(Position K1) {
 /* Perform a rotation at node X */
 /* (whose parent is passed as a parameter) */
 
-/* The child is deduced by examining Item */
+/* The child is deduced by examining ikey */
 
-Position
-Rotate(ElementType Item, Position Parent) {
+Position Rotate(int ikey, Position Parent) {
 
-    if (Item < Parent->Element)
-        return Parent->Left = Item < Parent->Left->Element ?
+    if (ikey < Parent->Key)
+        return Parent->Left = ikey < Parent->Left->Key ?
                               SingleRotateWithLeft(Parent->Left) :
                               SingleRotateWithRight(Parent->Left);
     else
-        return Parent->Right = Item < Parent->Right->Element ?
+        return Parent->Right = ikey < Parent->Right->Key ?
                                SingleRotateWithLeft(Parent->Right) :
                                SingleRotateWithRight(Parent->Right);
 }
 
 Position X, P, GP, GGP;
 
-RedBlackTree
-Insert(ElementType Item, ElementType ival, RedBlackTree T) {
+RBTree Insert(int ikey, int ival, RBTree T) {
     X = P = GP = T;
-    NullNode->Element = Item;
-    if(NullNode->Element==NULL){printf("check input\n"); return T;}
-    while (X->Element != Item) /* Descend down the tree */ {
+    NullNode->Key = ikey;
+    NullNode->Value = ival;
+    if(NullNode->Key==NULL){printf("check input\n"); return T;}
+    while (X->Key != ikey) /* Descend down the tree */ {
         GGP = GP;
         GP = P;
         P = X;
-        if (Item < X->Element)
+        if (ikey < X->Key)
             X = X->Left;
         else
             X = X->Right;
         if (X->Left->Color == Red && X->Right->Color == Red){
-            // HandleReorient(Item, T);
+            // HandleReorient(ikey, T);
             X->Color = Red; /* Do the color flip */
             X->Left->Color = Black;
             X->Right->Color = Black;
 
             if (P->Color == Red) /* Have to rotate */ {
                 GP->Color = Red;
-                if ((Item < GP->Element) != (Item < P->Element))
-                    P = Rotate(Item, GP); /* Start double rotate */
-                X = Rotate(Item, GGP);
+                if ((ikey < GP->Key) != (ikey < P->Key))
+                    P = Rotate(ikey, GP); /* Start double rotate */
+                X = Rotate(ikey, GGP);
                 X->Color = Black;
             }
             T->Right->Color = Black; /* Make root black */
         }
-
     }
 
-    if (X != NullNode)
-        return NullNode; /* Duplicate */
+    if (X != NullNode) {
+        dupli=1;
+        pre_value = X->Value; // duplicate
+    }
 
     X = malloc(sizeof ( struct RedBlackNode));
     if (X == NULL)
         printf("Out of space!!!");
-    X->Element = Item;
+    X->Key = ikey;
+    X->Value = ival;
     X->Left = X->Right = NullNode;
 
-    if (Item < P->Element) /* Attach to its parent */
+    if (ikey < P->Key) /* Attach to its parent */
         P->Left = X;
     else
         P->Right = X;
@@ -161,9 +155,9 @@ Insert(ElementType Item, ElementType ival, RedBlackTree T) {
 
     if (P->Color == Red) /* Have to rotate */ {
         GP->Color = Red;
-        if ((Item < GP->Element) != (Item < P->Element))
-            P = Rotate(Item, GP); /* Start double rotate */
-        X = Rotate(Item, GGP);
+        if ((ikey < GP->Key) != (ikey < P->Key))
+            P = Rotate(ikey, GP); /* Start double rotate */
+        X = Rotate(ikey, GGP);
         X->Color = Black;
     }
     T->Right->Color = Black; /* Make root black */
@@ -173,7 +167,7 @@ Insert(ElementType Item, ElementType ival, RedBlackTree T) {
 
 
 int main(int argc, char * argv[]) {
-    RedBlackTree T;
+    RBTree T, F;
 
     if (NullNode == NULL) {
         NullNode = malloc(sizeof ( struct RedBlackNode));
@@ -184,22 +178,17 @@ int main(int argc, char * argv[]) {
     }
 
     /* Create the header node */
-    T = malloc(sizeof ( struct RedBlackNode));
+    T = malloc(sizeof(struct RedBlackNode));
     if (T == NULL)
         printf("Out of space!!!");
-    //T->Element = -10;
     T->Left = T->Right = NullNode;
     T->Color = Black;
-
-    T->Right = MakeEmptyRec(T->Right);
 
     printf("Inserts are complete\n");
     //PrintTree(T->Right); // header skip
 
-
-
     char infi; // insert, find
-    ElementType key,val;
+    int key,val;
     FILE *open = fopen("input.txt","r");
     close = fopen("output.txt","w");
     if(open==NULL){puts("err : file read"); return 0;}
@@ -210,26 +199,26 @@ int main(int argc, char * argv[]) {
             case 'I':
                 fscanf(open, "%d%d", &key, &val);
                 T = Insert(key, val, T);
-                //  printf("%lld", T->Right->Element);
-//                if(dupli==1){
-//                    fprintf(close,"Found (%lld,%lld) update v=%lld\n",key,pre_value,val);
-//                    dupli=0;
-//                }
-//                else fprintf(close,"Inserted (%lld,%lld)\n",key,val);
+                if(dupli==1){
+                    fprintf(close,"Found (%d,%d) update v=%d\n",key,pre_value,val);
+                    dupli=0;
+                }
+                else fprintf(close,"Inserted (%d,%d)\n",key,val);
                 break;
             case 'F':
-                fscanf(open, "%lld", &key);
-//                F = Find(key,T);
-//                if(notfound==1){
-//                    fprintf(close,"Not Found\n");
-//                    notfound=0;
-//                    depth=0;
-//                }
-//                else{
-//                    fprintf(close,"Found (%lld,%lld) on d=%d with h=%d\n",F->Key,F->Value,depth,getHeight(F));
-//                    depth=0;
-//
-//                }
+                fscanf(open, "%d", &key);
+                F = Find(key,T);
+                if(notfound==1){
+                    fprintf(close,"Not Found\n");
+                    notfound=0;
+                    depth=0;
+                }
+                else{
+                    fprintf(close,"Found (%d,%d) on d=%d with c=",F->Key,F->Value,depth-1); // because header
+                    if(F->Color==Red)fprintf(close,"red\n");
+                    else fprintf(close,"black\n");
+                    depth=0;
+                }
                 break;
             case 'P':
                 PrintTree(T->Right, close);

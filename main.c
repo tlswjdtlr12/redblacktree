@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef uint64_t ElementType;
+typedef int ElementType;
 struct RedBlackNode;
 typedef struct RedBlackNode *Position;
 typedef struct RedBlackNode *RedBlackTree;
@@ -53,7 +53,7 @@ MakeEmptyRec(RedBlackTree T) {
 void
 PrintTree(RedBlackTree T, FILE * close) {
     if (T != NullNode) {
-        printf("%d ",T->Element);
+        fprintf(close,"%d ",T->Element);
         PrintTree(T->Left,close);
         PrintTree(T->Right,close);
     }
@@ -208,9 +208,9 @@ int main(int argc, char * argv[]) {
     {
         switch(infi) {
             case 'I':
-                fscanf(open, "%lld%lld", &key, &val);
+                fscanf(open, "%d%d", &key, &val);
                 T = Insert(key, val, T);
-              //  printf("%lld", T->Right->Element);
+                //  printf("%lld", T->Right->Element);
 //                if(dupli==1){
 //                    fprintf(close,"Found (%lld,%lld) update v=%lld\n",key,pre_value,val);
 //                    dupli=0;

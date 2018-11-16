@@ -1,9 +1,8 @@
 // 2014004739 신정식
 #include <stdio.h>
 #include <stdlib.h>
-#include <inttypes.h>
 
-typedef int ElementType;
+typedef uint64_t ElementType;
 struct RedBlackNode;
 typedef struct RedBlackNode *Position;
 typedef struct RedBlackNode *RedBlackTree;
@@ -41,10 +40,20 @@ Find(ElementType X, RedBlackTree T) {
         return T;
 }
 
+static RedBlackTree
+MakeEmptyRec(RedBlackTree T) {
+    if (T != NullNode) {
+        MakeEmptyRec(T->Left);
+        MakeEmptyRec(T->Right);
+        free(T);
+    }
+    return NullNode;
+}
+
 void
 PrintTree(RedBlackTree T, FILE * close) {
     if (T != NullNode) {
-        printf("%lld ",T->Element);
+        printf("%d ",T->Element);
         PrintTree(T->Left,close);
         PrintTree(T->Right,close);
     }
@@ -163,7 +172,7 @@ Insert(ElementType Item, ElementType ival, RedBlackTree T) {
 }
 
 
-main() {
+int main(int argc, char * argv[]) {
     RedBlackTree T;
 
     if (NullNode == NULL) {
@@ -182,6 +191,7 @@ main() {
     T->Left = T->Right = NullNode;
     T->Color = Black;
 
+    T->Right = MakeEmptyRec(T->Right);
 
     printf("Inserts are complete\n");
     //PrintTree(T->Right); // header skip
@@ -198,8 +208,9 @@ main() {
     {
         switch(infi) {
             case 'I':
-                fscanf(open, "%d%d", &key, &val);
+                fscanf(open, "%lld%lld", &key, &val);
                 T = Insert(key, val, T);
+              //  printf("%lld", T->Right->Element);
 //                if(dupli==1){
 //                    fprintf(close,"Found (%lld,%lld) update v=%lld\n",key,pre_value,val);
 //                    dupli=0;

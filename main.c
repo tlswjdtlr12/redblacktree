@@ -6,11 +6,14 @@
 struct RedBlackNode;
 typedef struct RedBlackNode *RBTree;
 
-RBTree Find(int X, RBTree T);
-RBTree Insert(int X, int ival, RBTree T);
-RBTree NullNode = NULL; /* Needs initialization */
+// P is parent, GP is Grand parent
+RBTree Position, P, GP, TEMP;
+RBTree Find(int Position, RBTree T);
+RBTree Insert(int Position, int ival, RBTree T);
+RBTree NN = NULL;
 FILE * close;
 int depth, dupli, pre_value, notfound;
+
 
 typedef enum Color {
     Red, Black
@@ -26,7 +29,7 @@ struct RedBlackNode {
 
 RBTree Find(int ikey, RBTree T) {
     if(ikey==NULL){printf("check input\n"); return T;}
-    if (T == NullNode) {
+    if (T == NN) {
         notfound = 1;
         return T;
     }
@@ -43,17 +46,12 @@ RBTree Find(int ikey, RBTree T) {
 }
 
 void PrintTree(RBTree T, FILE * close) {
-    if (T != NullNode) {
+    if (T != NN) {
         fprintf(close,"(%d,%d) ",T->Key,T->Value);
         PrintTree(T->Left,close);
         PrintTree(T->Right,close);
     }
 }
-
-/* This function can be called only if K2 has a left child */
-/* Perform a rotate between a node (K2) and its left child */
-
-/* Update heights, then return new root */
 
 RBTree SingleLeft(RBTree K2) {
     RBTree K1;
@@ -75,7 +73,7 @@ RBTree SingleRight(RBTree K1) {
     return K2;
 }
 
-RBTree Rotate(int ikey, RBTree P) { // P is Parent
+RBTree DoubleRotate(int ikey, RBTree P) { // P is Parent
 
     if(ikey < P->Key){
         if(ikey < P->Left->Key) P->Left = SingleLeft(P->Left);
@@ -89,66 +87,74 @@ RBTree Rotate(int ikey, RBTree P) { // P is Parent
     }
 }
 
-RBTree X, P, GP, GGP;
-
 RBTree Insert(int ikey, int ival, RBTree T) {
-    X = P = GP = T;
-    NullNode->Key = ikey;
-    NullNode->Value = ival;
-    if(NullNode->Key==NULL){printf("check input\n"); return T;}
-    while (X->Key != ikey) /* Descend down the tree */ {
-        GGP = GP;
-        GP = P;
-        P = X;
-        if (ikey < X->Key)
-            X = X->Left;
-        else
-            X = X->Right;
-        if (X->Left->Color == Red && X->Right->Color == Red){
-            // HandleReorient(ikey, T);
-            X->Color = Red; /* Do the color flip */
-            X->Left->Color = Black;
-            X->Right->Color = Black;
+    Position = P = GP = T;
+    NN->Key = ikey;
+    NN->Value = ival;
+    if(NN->Key==NULL){printf("check input\n"); return T;}
+    while (Position->Key != ikey) {
 
-            if (P->Color == Red) /* Have to rotate */ {
+        // descending
+        TEMP = GP;
+        GP = P;
+        P = Position;
+
+        // child's position
+        Position = ikey < Position->Key ? Position->Left : Position->Right;
+
+        // Both left and right are Red => color change
+        if (Position->Left->Color == Red && Position->Right->Color == Red){
+            Position->Color = Red;
+            Position->Left->Color = Black;
+            Position->Right->Color = Black;
+
+            // after color change, check parent's color is red
+            if (P->Color == Red){
                 GP->Color = Red;
                 if ((ikey < GP->Key) != (ikey < P->Key))
-                    P = Rotate(ikey, GP); /* Start double rotate */
-                X = Rotate(ikey, GGP);
-                X->Color = Black;
+                    P = DoubleRotate(ikey, GP); /* Start double DoubleRotate */
+                Position = DoubleRotate(ikey, TEMP);
+                Position->Color = Black;
             }
-            T->Right->Color = Black; /* Make root black */
+            // root color. T is header, T->Right is Root
+            T->Right->Color = Black;
         }
     }
 
-    if (X != NullNode) { // duplicate
+    // Until this line, value finding confirmation
+
+    if (Position != NN) { // duplicate
         dupli=1;
-        pre_value = X->Value;
+        pre_value = Position->Value;
     }
 
-    X = malloc(sizeof ( struct RedBlackNode));
-    if (X == NULL)
+    // Insert
+    Position = malloc(sizeof ( struct RedBlackNode));
+    if (Position == NULL)
         printf("Out of space!!!");
-    X->Key = ikey;
-    X->Value = ival;
-    X->Left = X->Right = NullNode;
+    Position->Key = ikey;
+    Position->Value = ival;
+    Position->Left = Position->Right = NN;
 
-    if (ikey < P->Key) /* Attach to its parent */
-        P->Left = X;
-    else
-        P->Right = X;
-    X->Color = Red; /* Do the color flip */
-    X->Left->Color = Black;
-    X->Right->Color = Black;
+    // child's position
+    Position = ikey < Position->Key ? Position->Left : Position->Right;
 
-    if (P->Color == Red) /* Have to rotate */ {
+    // color change
+    Position->Color = Red;
+    Position->Left->Color = Black;
+    Position->Right->Color = Black;
+
+    // after color change, check parent's color is red
+    if (P->Color == Red){
         GP->Color = Red;
         if ((ikey < GP->Key) != (ikey < P->Key))
-            P = Rotate(ikey, GP); /* Start double rotate */
-        X = Rotate(ikey, GGP);
-        X->Color = Black;
+            P = DoubleRotate(ikey, GP);
+        Position = DoubleRotate(ikey, TEMP);
+        Position->Color = Black;
     }
-    T->Right->Color = Black; /* Make root black */
+
+    // root's color is black. T is header, T->Right is Root
+    T->Right->Color = Black;
 
     return T;
 }
@@ -156,20 +162,19 @@ RBTree Insert(int ikey, int ival, RBTree T) {
 
 int main(int argc, char * argv[]) {
     RBTree T, F;
-
-    if (NullNode == NULL) {
-        NullNode = malloc(sizeof ( struct RedBlackNode));
-        if (NullNode == NULL)
-            printf("Out of space!!!");
-        NullNode->Left = NullNode->Right = NullNode;
-        NullNode->Color = Black;
+    
+    // NN is node with null
+    if (NN == NULL) {
+        NN = malloc(sizeof ( struct RedBlackNode));
+        if (NN == NULL) printf("error");
+        NN->Left = NN->Right = NN;
+        NN->Color = Black;
     }
 
-    /* Create the header node */
+    // T is header node. T->Right is root
     T = malloc(sizeof(struct RedBlackNode));
-    if (T == NULL)
-        printf("Out of space!!!");
-    T->Left = T->Right = NullNode;
+    if (T == NULL) printf("error\n");
+    T->Left = T->Right = NN;
     T->Color = Black;
 
     printf("Inserts are complete\n");
@@ -202,7 +207,7 @@ int main(int argc, char * argv[]) {
                     depth=0;
                 }
                 else{
-                    fprintf(close,"Found (%d,%d) on d=%d with c=",F->Key,F->Value,depth-1); // because header
+                    fprintf(close,"Found (%d,%d) on d=%d with c=",F->Key,F->Value,depth-1); // depth-1 : because header
                     if(F->Color==Red)fprintf(close,"red\n");
                     else fprintf(close,"black\n");
                     depth=0;

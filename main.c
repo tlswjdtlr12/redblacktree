@@ -1,14 +1,16 @@
 // 2014004739 신정식
+
 #include <stdio.h>
 #include <stdlib.h>
 
-//typedef int int;
 struct RedBlackNode;
-typedef struct RedBlackNode *Position;
 typedef struct RedBlackNode *RBTree;
 
 RBTree Find(int X, RBTree T);
 RBTree Insert(int X, int ival, RBTree T);
+RBTree NullNode = NULL; /* Needs initialization */
+FILE * close;
+int depth, dupli, pre_value, notfound;
 
 typedef enum Color {
     Red, Black
@@ -21,12 +23,6 @@ struct RedBlackNode {
     RBTree Right;
     Color Color;
 };
-
-Position NullNode = NULL; /* Needs initialization */
-FILE * close;
-int depth, dupli, pre_value, notfound;
-
-/* END */
 
 RBTree Find(int ikey, RBTree T) {
     if(ikey==NULL){printf("check input\n"); return T;}
@@ -59,49 +55,41 @@ void PrintTree(RBTree T, FILE * close) {
 
 /* Update heights, then return new root */
 
-Position SingleRotateWithLeft(Position K2) {
-    Position K1;
+RBTree SingleLeft(RBTree K2) {
+    RBTree K1;
 
     K1 = K2->Left;
     K2->Left = K1->Right;
     K1->Right = K2;
 
-    return K1; /* New root */
+    return K1;
 }
 
-/* This function can be called only if K1 has a right child */
-/* Perform a rotate between a node (K1) and its right child */
-
-/* Update heights, then return new root */
-
-Position SingleRotateWithRight(Position K1) {
-    Position K2;
+RBTree SingleRight(RBTree K1) {
+    RBTree K2;
 
     K2 = K1->Right;
     K1->Right = K2->Left;
     K2->Left = K1;
 
-    return K2; /* New root */
+    return K2;
 }
 
-/* Perform a rotation at node X */
-/* (whose parent is passed as a parameter) */
+RBTree Rotate(int ikey, RBTree P) { // P is Parent
 
-/* The child is deduced by examining ikey */
-
-Position Rotate(int ikey, Position Parent) {
-
-    if (ikey < Parent->Key)
-        return Parent->Left = ikey < Parent->Left->Key ?
-                              SingleRotateWithLeft(Parent->Left) :
-                              SingleRotateWithRight(Parent->Left);
-    else
-        return Parent->Right = ikey < Parent->Right->Key ?
-                               SingleRotateWithLeft(Parent->Right) :
-                               SingleRotateWithRight(Parent->Right);
+    if(ikey < P->Key){
+        if(ikey < P->Left->Key) P->Left = SingleLeft(P->Left);
+        else P->Left = SingleRight(P->Left);
+        return P->Left;
+    }
+    else {
+        if (ikey < P->Right->Key) P->Right = SingleLeft(P->Right);
+        else P->Right = SingleRight(P->Right);
+        return P->Right;
+    }
 }
 
-Position X, P, GP, GGP;
+RBTree X, P, GP, GGP;
 
 RBTree Insert(int ikey, int ival, RBTree T) {
     X = P = GP = T;
@@ -133,9 +121,9 @@ RBTree Insert(int ikey, int ival, RBTree T) {
         }
     }
 
-    if (X != NullNode) {
+    if (X != NullNode) { // duplicate
         dupli=1;
-        pre_value = X->Value; // duplicate
+        pre_value = X->Value;
     }
 
     X = malloc(sizeof ( struct RedBlackNode));

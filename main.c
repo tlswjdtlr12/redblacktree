@@ -2,6 +2,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
+
+#define BILLION 1000000000ULL
 
 struct RedBlackNode;
 typedef struct RedBlackNode *RBTree;
@@ -14,6 +17,8 @@ RBTree NN = NULL;
 FILE * close;
 int depth, dupli, pre_value, notfound;
 
+struct timespec start, end;
+double elapsed_time;
 
 typedef enum Color {
     Red, Black
@@ -186,6 +191,7 @@ int main(int argc, char * argv[]) {
     close = fopen("output.txt","w");
     if(open==NULL){puts("err : file read"); return 0;}
 
+    clock_gettime(CLOCK_MONOTONIC, &start);
     while(fscanf(open,"%c",&infi) != EOF)
     {
         switch(infi) {
@@ -216,10 +222,16 @@ int main(int argc, char * argv[]) {
             case 'P':
                 PrintTree(T->Right, close);
                 fprintf(close, "\n");
+                break;
             case 'Q':
+                fclose(open);
+                fclose(close);
                 // end of file
                 break;
         }
     }
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    elapsed_time = (end.tv_nsec - start.tv_nsec) + (end.tv_sec - start.tv_sec) * BILLION;
+    printf("Elapsed time: %lf (ns)\n", elapsed_time / 1000000000.0);
     return 0;
 }

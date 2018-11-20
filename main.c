@@ -8,8 +8,8 @@ typedef struct RedBlackNode *RBTree;
 
 // P is parent, GP is Grand parent
 RBTree Position, P, GP, TEMP;
-RBTree Find(int Position, RBTree T);
-RBTree Insert(int Position, int ival, RBTree T);
+RBTree Find(int ikey, RBTree T);
+RBTree Insert(int ikey, int ival, RBTree T);
 RBTree NN = NULL;
 FILE * close;
 int depth, dupli, pre_value, notfound;
@@ -112,7 +112,7 @@ RBTree Insert(int ikey, int ival, RBTree T) {
             if (P->Color == Red){
                 GP->Color = Red;
                 if ((ikey < GP->Key) != (ikey < P->Key))
-                    P = DoubleRotate(ikey, GP); /* Start double DoubleRotate */
+                    P = DoubleRotate(ikey, GP);
                 Position = DoubleRotate(ikey, TEMP);
                 Position->Color = Black;
             }
@@ -136,8 +136,11 @@ RBTree Insert(int ikey, int ival, RBTree T) {
     Position->Value = ival;
     Position->Left = Position->Right = NN;
 
-    // child's position
-    Position = ikey < Position->Key ? Position->Left : Position->Right;
+    // attach parent
+    if (ikey < P->Key)
+        P->Left = Position;
+    else
+        P->Right = Position;
 
     // color change
     Position->Color = Red;
@@ -162,7 +165,7 @@ RBTree Insert(int ikey, int ival, RBTree T) {
 
 int main(int argc, char * argv[]) {
     RBTree T, F;
-    
+
     // NN is node with null
     if (NN == NULL) {
         NN = malloc(sizeof ( struct RedBlackNode));
@@ -176,9 +179,6 @@ int main(int argc, char * argv[]) {
     if (T == NULL) printf("error\n");
     T->Left = T->Right = NN;
     T->Color = Black;
-
-    printf("Inserts are complete\n");
-    //PrintTree(T->Right); // header skip
 
     char infi; // insert, find
     int key,val;
